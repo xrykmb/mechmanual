@@ -2,6 +2,8 @@
 
 面向车间维护的**设备手册问答**工具。把泵、风机、减速机一类手册切成可检索片段，用关键词先能查到条款；后续接入向量检索、DeepSeek 生成和 MCP，给现场和 IDE 里的 Agent 用。
 
+向量检索 MCP 底座见独立仓库 [mcp-vector](https://github.com/xrykmb/mcp-vector)（HNSW + 元数据过滤 + MCP tools）。
+
 ## 解决什么问题
 
 纸质/PDF 手册难搜：术语不统一（「润滑周期」vs「加油间隔」），现场要翻很久。面试官能听懂的场景：维修工问「这台离心泵多久换脂」，系统给出手册原文位置，而不是空口回答。
@@ -11,7 +13,7 @@
 | 层 | 当前 | 规划 |
 |----|------|------|
 | 语言 | Python 3.11+ | 同左 |
-| 检索 | 章节切分 + 关键词打分 | 稠密向量 + BM25 混合、RRF/MMR |
+| 检索 | 章节切分 + 关键词打分 | 对接 mcp-vector 的 HNSW |
 | 生成 | 未接（骨架阶段） | DeepSeek OpenAI 兼容接口 |
 | 协议 | CLI | MCP tools：`search_manual` / `ask_manual` |
 
@@ -19,7 +21,7 @@
 
 ```
 examples/manuals/*.md  →  parse sections  →  score(query)  →  CLI
-                                              ↘ 后续：embed + LLM + MCP
+                                              ↘ 后续：mcp-vector + LLM
 ```
 
 `src/mechmanual/` 只放可测试的纯逻辑，CLI 很薄，方便后面加 MCP 而不改检索核心。
@@ -54,7 +56,7 @@ mechmanual search "轴承过热"
 
 ## 未来规划
 
-- [ ] 混合检索（向量余弦 + BM25 + RRF）
+- [ ] 手册切分结果写入 [mcp-vector](https://github.com/xrykmb/mcp-vector)
 - [ ] DeepSeek 带依据的生成（只引用检索到的条款）
 - [ ] MCP Server，供 Cursor / Claude 调用手册检索
 - [ ] 领域同义词表（润滑/加油/脂）
