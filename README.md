@@ -1,2 +1,64 @@
-# mechmanual
-Equipment-manual Q&amp;A for shop-floor maintenance: hybrid retrieval, DeepSeek, MCP.
+# MechManual
+
+面向车间维护的**设备手册问答**工具。把泵、风机、减速机一类手册切成可检索片段，用关键词先能查到条款；后续接入向量检索、DeepSeek 生成和 MCP，给现场和 IDE 里的 Agent 用。
+
+## 解决什么问题
+
+纸质/PDF 手册难搜：术语不统一（「润滑周期」vs「加油间隔」），现场要翻很久。面试官能听懂的场景：维修工问「这台离心泵多久换脂」，系统给出手册原文位置，而不是空口回答。
+
+## 技术栈
+
+| 层 | 当前 | 规划 |
+|----|------|------|
+| 语言 | Python 3.11+ | 同左 |
+| 检索 | 章节切分 + 关键词打分 | 稠密向量 + BM25 混合、RRF/MMR |
+| 生成 | 未接（骨架阶段） | DeepSeek OpenAI 兼容接口 |
+| 协议 | CLI | MCP tools：`search_manual` / `ask_manual` |
+
+## 架构
+
+```
+examples/manuals/*.md  →  parse sections  →  score(query)  →  CLI
+                                              ↘ 后续：embed + LLM + MCP
+```
+
+`src/mechmanual/` 只放可测试的纯逻辑，CLI 很薄，方便后面加 MCP 而不改检索核心。
+
+## 快速启动
+
+需要 Python 3.11+（3.10 一般也可）。
+
+```powershell
+git clone https://github.com/xrykmb/mechmanual.git
+cd mechmanual
+python -m venv .venv
+.\ .venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+mechmanual search "润滑" --manuals examples/manuals
+python -m pytest
+```
+
+Linux/macOS 把激活换成 `source .venv/bin/activate`。
+
+复制 `.env.example` 为 `.env` 后填写 key（生成模块接上之后才会用到）。
+
+## 演示示例
+
+仓库自带一份离心泵维护样例（虚构，仅供演示）：
+
+```text
+mechmanual search "轴承过热"
+```
+
+应能命中「故障与处理」章节，并打印来源路径。
+
+## 未来规划
+
+- [ ] 混合检索（向量余弦 + BM25 + RRF）
+- [ ] DeepSeek 带依据的生成（只引用检索到的条款）
+- [ ] MCP Server，供 Cursor / Claude 调用手册检索
+- [ ] 领域同义词表（润滑/加油/脂）
+
+## License
+
+MIT
